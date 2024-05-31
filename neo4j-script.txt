@@ -1,0 +1,31 @@
+LOAD CSV WITH HEADERS FROM 'https://drive.usercontent.google.com/download?id=1wrZI3eP-t5TYQq-6BIyeNxjnQtWPIxs8&export=download&authuser=1&confirm=t&uuid=e5505c04-667b-4b63-9391-ce5974c337a4&at=APZUnTXm0j1Q5ZiK5x0hKUpBhx4C:1717125528165' AS row
+CREATE (p:Product {
+    id: toInteger(row.id),
+    namaProduk: row.namaProduk,
+    kategori: row.kategori,
+    harga: toInteger(row.harga)
+});
+
+LOAD CSV WITH HEADERS FROM 'https://drive.usercontent.google.com/download?id=1Ltmk60sjRwyXV3Qp_fNbVZPetCkOHHWy&export=download&authuser=1&confirm=t&uuid=d2b64e41-3f07-4d9d-a164-a916a71b402d&at=APZUnTWFx6tzr_vp_P7UPulz3C8c:1717125651836' AS row
+MERGE (b:Buyer {name: row.pembeli, jenis_kelamin: row.jenis_kelamin})
+WITH b, row
+MATCH (p:Product {id: toInteger(row.product_id)})
+CREATE (b)-[:PURCHASED {
+    date: row.date,
+    kuantitas: toInteger(row.kuantitas),
+    rating: toInteger(row.rating)
+}]->(p);
+
+MATCH (p:Product {kategori: 'atasan'})
+RETURN p;
+MATCH (b:Buyer {jenis_kelamin: 'P'})-[:PURCHASED {rating: 4}]->(p:Product {kategori: 'atasan'})
+RETURN b.name, p.namaProduk, p.kategori, 4 AS rating
+UNION
+MATCH (b:Buyer {jenis_kelamin: 'P'})-[:PURCHASED {rating: 5}]->(p:Product {kategori: 'atasan'})
+RETURN b.name, p.namaProduk, p.kategori, 5 AS rating;
+
+MATCH (p:Product {id: 176})
+DETACH DELETE p;
+
+MATCH (b:Buyer)-[r:PURCHASED]->(p:Product)
+RETURN b, r, p;
